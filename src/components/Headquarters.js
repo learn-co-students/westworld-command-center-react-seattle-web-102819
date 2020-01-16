@@ -1,27 +1,65 @@
 import React, { Component } from 'react';
 import '../stylesheets/Headquarters.css';
 import { Grid } from 'semantic-ui-react';
-import Details from './Details'
+import Details from './Details';
+import ColdStorage from './ColdStorage';
+import LogPanel from './LogPanel';
 
 
 class Headquarters extends Component {
-  // Remember, there's many ways to do this. This doesn't have to be a class component. It's up to you.
+  state = {
+    logEvents: [],
+    activated: false
+  }
+
+  addLog = (event) => {
+    this.setState({
+      logEvents: [event, ...this.state.logEvents]
+    })
+  }
+
+  handleToggleActivate = () => {
+    this.setState({
+      activated: !this.state.activated
+    }, ()=>{this.props.toggleActivateAll(this.state.activated)})
+  }
+
+  selectedHost = () => {
+    return this.props.hosts.find( host => host.id === this.props.selectedHostId )
+    }
+
+  renderInactiveHosts = () => this.props.hosts.filter( host => !host.active )
+  
+
 
   render(){
+    const { areas, hosts, selectedHostId, selectHost, activateHost, setArea } = this.props
     return(
       <Grid celled='internally'>
         <Grid.Column width={8}>
-
-        {/* Something goes here.... */}
-
+          <ColdStorage
+            hosts={this.renderInactiveHosts()}
+            selectHost={selectHost}
+            selectedHostId={selectedHostId}
+          />
         </Grid.Column>
         <Grid.Column width={5}>
-          <Details />
+          <Details
+            hosts={hosts}
+            activateHost={activateHost}
+            selectedHost={this.selectedHost()}
+            areas={areas}
+            setArea={setArea}
+            addLog={this.addLog}
+          />
         </Grid.Column>
         <Grid.Column width={3}>
-
-        {/* and here. Take visual cues from the screenshot/video in the Readme. */}
-
+          <LogPanel
+            handleToggleActivate={this.handleToggleActivate}
+            events={this.state.logEvents}
+            activated={this.state.activated}
+            addLog={this.addLog}
+          />
         </Grid.Column>
       </Grid>
     )

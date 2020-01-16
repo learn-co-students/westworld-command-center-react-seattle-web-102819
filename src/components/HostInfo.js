@@ -1,77 +1,75 @@
-import '../stylesheets/HostInfo.css'
-import React, { Component } from 'react'
-import { Radio, Icon, Card, Grid, Image, Dropdown, Divider } from 'semantic-ui-react'
+import React from 'react';
+import '../stylesheets/HostInfo.css';
+import { Radio, Icon, Card, Grid, Image, Dropdown, Divider } from 'semantic-ui-react';
+import { Log } from '../services/Log';
 
 
-class HostInfo extends Component {
-  state = {
-    options: [
-      {key: "some_area", text: "Some Area", value: "some_area"},
-      {key: "another_area", text: "Another Area", value: "another_area"}
-    ],
-    value: "some_area"
-    // This state is just to show how the dropdown component works.
-    // Options have to be formatted in this way (array of objects with keys of: key, text, value)
-    // Value has to match the value in the object to render the right text.
+const HostInfo = ({ selectedHost, areas, hosts, addLog, setArea, activateHost }) => {
 
-    // IMPORTANT: But whether it should be stateful or not is entirely up to you. Change this component however you like.
+  const handleChange = (e, data) => {
+    let newArea = areas.find( area => area.name === data.value)
+    let hostsInArea = hosts.filter( host => host.area === data.value)
+
+    if(newArea.limit < (hostsInArea.length + 1)){
+      addLog(Log.error(`Too many hosts. Cannot add ${selectedHost.firstName} to ${newArea.label}.`))
+    } else {
+      addLog(Log.notify(`${selectedHost.firstName} set in area ${newArea.label}`))
+      setArea(selectedHost.id, data.value)
+    }
   }
 
+  const toggle = () => {
+    if(selectedHost.active){
+      addLog(Log.notify(`Decommissioned ${selectedHost.firstName}`))
+    }else{
+      addLog(Log.warn(`Activated ${selectedHost.firstName}`))
+    }
 
-
-  handleChange = (e, {value}) => {
-    // the 'value' attribute is given via Semantic's Dropdown component.
-    // Put a debugger in here and see what the "value" variable is when you pass in different options.
-    // See the Semantic docs for more info: https://react.semantic-ui.com/modules/dropdown/#usage-controlled
+    activateHost(selectedHost.id)
   }
 
-  toggle = () => {
-    console.log("The radio button fired");
-  }
+  const formattedNames = areas.map( area => {
+    return {key: area.id, value: area.name, text: area.label}
+  })
 
-  render(){
-    return (
-      <Grid>
-        <Grid.Column width={6}>
-          <Image
-            src={ /* pass in the right image here */ }
-            floated='left'
-            size='small'
-            className="hostImg"
-          />
-        </Grid.Column>
-        <Grid.Column width={10}>
-          <Card>
-            <Card.Content>
-              <Card.Header>
-                {"Bob"} | { true ? <Icon name='man' /> : <Icon name='woman' />}
-                { /* Think about how the above should work to conditionally render the right First Name and the right gender Icon */ }
-              </Card.Header>
-              <Card.Meta>
-                <Radio
-                  onChange={this.toggle}
-                  label={"Active"}
-                  {/* Sometimes the label should take "Decommissioned". How are we going to conditionally render that? */}
-                  checked={true}
-                  {/* Checked takes a boolean and determines what position the switch is in. Should it always be true? */}
-                  slider
-                />
-              </Card.Meta>
-
-              <Divider />
-              Current Area:
-              <Dropdown
-                onChange={this.handleChange}
-                value={this.state.value}
-                options={this.state.options}
-                selection
+  return (
+    <Grid>
+      <Grid.Column width={6}>
+        <Image
+          className="hostImg"
+          floated='left'
+          size='small'
+          src={selectedHost.imageUrl}
+        />
+      </Grid.Column>
+      <Grid.Column width={10}>
+        <Card>
+          <Card.Content>
+            <Card.Header>
+              {selectedHost.firstName} | {selectedHost.gender === "Male" ? <Icon name='man' /> : <Icon name='woman' />}
+            </Card.Header>
+            <Card.Meta>
+              <Radio
+                onChange={toggle}
+                label={selectedHost.active ? "Active" : "Decommissioned"}
+                checked={selectedHost.active}
+                slider
               />
-            </Card.Content>
-          </Card>
-        </Grid.Column>
-      </Grid>
-    )
-  }
+            </Card.Meta>
+
+            <Divider />
+            Current Area:
+            <Dropdown
+              onChange={handleChange}
+              value={selectedHost.area}
+              options={formattedNames}
+              selection
+            />
+          </Card.Content>
+        </Card>
+      </Grid.Column>
+    </Grid>
+  )
 }
 
 export default HostInfo
